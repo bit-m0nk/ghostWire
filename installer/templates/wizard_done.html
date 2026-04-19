@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GhostWire — Installed!</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#08090f;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#111827;border:1px solid rgba(52,211,153,.3);border-radius:16px;padding:44px 40px;max-width:500px;width:100%;text-align:center;box-shadow:0 0 40px rgba(52,211,153,.08)}
+.check{font-size:52px;margin-bottom:12px;display:block}
+h1{font-size:24px;font-weight:800;color:#34d399;margin-bottom:6px}
+.sub{color:#64748b;font-size:13px;margin-bottom:28px;line-height:1.5}
+.url-box{background:#0a0c14;border:1px solid #1e2a3a;border-radius:10px;padding:16px;margin-bottom:24px}
+.url-label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.url-val{font-size:18px;font-weight:700;color:#6366f1;font-family:monospace;word-break:break-all}
+.steps-done{text-align:left;margin-bottom:28px}
+.step-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;color:#94a3b8;transition:color .3s}
+.step-row.live{color:#34d399}
+.step-row.fail{color:#f87171}
+.step-row .icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.status-banner{border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;transition:all .4s}
+.status-banner.checking{background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);color:#818cf8}
+.status-banner.up{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:#34d399}
+.status-banner.down{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:#f87171}
+.spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn{display:block;width:100%;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;padding:14px;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;text-decoration:none;transition:opacity .15s}
+.btn:hover{opacity:.88}
+.btn.disabled{opacity:.4;pointer-events:none;cursor:not-allowed}
+.hint{font-size:11px;color:#475569;margin-top:14px;line-height:1.8}
+code{background:#0a0c14;padding:2px 6px;border-radius:4px;font-size:11px;color:#818cf8}
+</style>
+</head>
+<body>
+<div class="card">
+  <span class="check">🎉</span>
+  <h1>GhostWire is installed!</h1>
+  <p class="sub">Installation completed. Verifying the dashboard is reachable…</p>
+
+  <div class="url-box">
+    <div class="url-label">Dashboard URL</div>
+    <div class="url-val">{{ done_url }}</div>
+  </div>
+
+  <div class="status-banner checking" id="statusBanner">
+    <div class="spinner" id="spinner"></div>
+    <span id="statusText">Checking dashboard health…</span>
+  </div>
+
+  <div class="steps-done">
+    <div class="step-row live"><span class="icon">✓</span>Dependencies installed</div>
+    <div class="step-row live"><span class="icon">✓</span>TLS certificates generated</div>
+    <div class="step-row live"><span class="icon">✓</span>Database initialised</div>
+    <div class="step-row live"><span class="icon">✓</span>strongSwan configured</div>
+    <div class="step-row" id="s-dash"><span class="icon">⏳</span>Dashboard built &amp; running</div>
+  </div>
+
+  <a href="{{ done_url }}" class="btn disabled" id="openBtn">Open Dashboard →</a>
+  <p class="hint" id="hint" style="display:none"></p>
+</div>
+
+<script>
+const DASHBOARD_URL = "{{ done_url }}";
+const HEALTH_URL    = DASHBOARD_URL + "/api/health";
+let   pollCount     = 0;
+const MAX_POLLS     = 30;
+
+function setBanner(state, text) {
+  const b = document.getElementById("statusBanner");
+  b.className = "status-banner " + state;
+  document.getElementById("spinner").style.display = (state === "checking") ? "" : "none";
+  document.getElementById("statusText").textContent = text;
+}
+function markDash(ok) {
+  const row = document.getElementById("s-dash");
+  row.querySelector(".icon").textContent = ok ? "✓" : "✗";
+  row.className = "step-row " + (ok ? "live" : "fail");
+}
+function onUp() {
+  markDash(true);
+  setBanner("up", "Dashboard is live — ready to use!");
+  const btn = document.getElementById("openBtn");
+  btn.classList.remove("disabled");
+  btn.href = DASHBOARD_URL;
+  document.getElementById("hint").style.display = "none";
+}
+function onTimeout() {
+  markDash(false);
+  setBanner("down", "Dashboard did not respond in time.");
+  document.getElementById("hint").style.display = "";
+  document.getElementById("hint").innerHTML =
+    "SSH into the server and check:<br>" +
+    "<code>sudo journalctl -u ghostwire-backend -n 60 --no-pager</code><br>" +
+    "<code>sudo systemctl restart ghostwire-backend</code>";
+}
+async function poll() {
+  pollCount++;
+  // Use no-cors so we don't need CORS headers — a non-throw means the server answered
+  try {
+    await fetch(HEALTH_URL, { mode: "no-cors", cache: "no-store" });
+    onUp(); return;
+  } catch(_) {}
+  try {
+    await fetch(DASHBOARD_URL, { mode: "no-cors", cache: "no-store" });
+    onUp(); return;
+  } catch(_) {}
+  if (pollCount >= MAX_POLLS) { onTimeout(); return; }
+  setBanner("checking", "Waiting for dashboard\u2026 (" + pollCount + "/" + MAX_POLLS + ")");
+  setTimeout(poll, 2000);
+}
+setTimeout(poll, 1500);
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GhostWire — Installer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#08090f;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#111827;border:1px solid #1e2a3a;border-radius:16px;padding:44px 40px;max-width:520px;width:100%;text-align:center}
+.ghost{font-size:52px;display:block;margin-bottom:16px;filter:drop-shadow(0 0 20px rgba(99,102,241,0.4))}
+h1{font-size:26px;font-weight:800;color:#fff;margin-bottom:6px}
+.sub{color:#64748b;font-size:14px;margin-bottom:32px;line-height:1.5}
+.pill{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);color:#34d399;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;margin-bottom:28px}
+.dot{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 6px #34d399}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px}
+.info-box{background:#0a0c14;border:1px solid #1e2a3a;border-radius:10px;padding:14px}
+.info-box .label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.info-box .val{font-size:15px;font-weight:700;color:#e2e8f0;font-family:monospace}
+.steps{background:#0a0c14;border:1px solid #1e2a3a;border-radius:10px;padding:16px;margin-bottom:28px;text-align:left}
+.steps h3{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.step-row{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:13px;color:#94a3b8}
+.step-row .num{width:20px;height:20px;border-radius:50%;background:#6366f1;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.btn{display:block;width:100%;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;padding:14px;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .15s;letter-spacing:.02em}
+.btn:hover{opacity:.88}
+.footer{margin-top:20px;font-size:11px;color:#475569}
+</style>
+</head>
+<body>
+<div class="card">
+  <span class="ghost">👻</span>
+  <div class="pill"><div class="dot"></div>Ready to install</div>
+  <h1>GhostWire Installer</h1>
+  <p class="sub">Self-hosted IKEv2/IPSec VPN with a modern dashboard.<br>This wizard will configure everything in about 3 minutes.</p>
+
+  <div class="info-grid">
+    <div class="info-box">
+      <div class="label">Local IP</div>
+      <div class="val">{{ local_ip }}</div>
+    </div>
+    <div class="info-box">
+      <div class="label">Public IP</div>
+      <div class="val">{{ public_ip }}</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <h3>What this installer does</h3>
+    <div class="step-row"><div class="num">1</div>Collect your configuration (2 min)</div>
+    <div class="step-row"><div class="num">2</div>Install dependencies + strongSwan</div>
+    <div class="step-row"><div class="num">3</div>Generate TLS certificates</div>
+    <div class="step-row"><div class="num">4</div>Build the Vue dashboard</div>
+    <div class="step-row"><div class="num">5</div>Start all services</div>
+  </div>
+
+  <form action="/start" method="post">
+    <button type="submit" class="btn">Begin Setup →</button>
+  </form>
+  <div class="footer">Requires root · Tested on Raspberry Pi OS, Ubuntu 22/24, Debian 12</div>
+</div>
+</body>
+</html>

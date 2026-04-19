@@ -1,0 +1,89 @@
+# GhostWire — Docker Compose Stack
+# Usage:
+#   cp .env.example .env        # fill in your values
+#   docker compose up -d
+#
+# The backend needs NET_ADMIN + host network to control strongSwan.
+# For Raspberry Pi: set platform: linux/arm64 on the backend service.
+
+version: "3.9"
+
+services:
+
+  # ── Backend (FastAPI + strongSwan sidecar control) ──────────────────────────
+  ghostwire-backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    image: ghostwire/backend:latest
+    container_name: ghostwire-backend
+    restart: unless-stopped
+    network_mode: host            # Required: strongSwan needs raw socket access
+    pid: host                     # Required: ipsec statusall reads /proc
+    cap_add:
+      - NET_ADMIN
+      - SYS_PTRACE
+    volumes:
+      - ghostwire-data:/opt/ghostwire/data
+      - /etc/ipsec.d:/etc/ipsec.d:ro   # Read certs written by setup
+      - /var/run/charon.ctl:/var/run/charon.ctl  # strongSwan control socket
+      - ./backend:/opt/ghostwire/backend:ro
+      - ./.env:/opt/ghostwire/.env:ro
+    environment:
+      - DB_PATH=/opt/ghostwire/data/ghostwire.db
+    depends_on:
+      ghostwire-frontend:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:${PANEL_PORT:-8080}/api/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Frontend builder (one-shot — builds Vue, then exits) ────────────────────
+  ghostwire-frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    image: ghostwire/frontend-builder:latest
+    container_name: ghostwire-frontend-build
+    volumes:
+      - ghostwire-dist:/opt/ghostwire/frontend_dist
+      - ./frontend:/app:ro
+    command: sh -c "npm ci --silent && npm run build && cp -r /app/dist/* /opt/ghostwire/frontend_dist/"
+
+  # ── Postgres (optional — comment out to use SQLite default) ─────────────────
+  # ghostwire-db:
+  #   image: postgres:16-alpine
+  #   container_name: ghostwire-db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: ghostwire
+  #     POSTGRES_USER: ghostwire
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+  #   volumes:
+  #     - ghostwire-pgdata:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ghostwire"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # ── Watchtower (optional — auto-pull image updates) ──────────────────────────
+  # watchtower:
+  #   image: containrrr/watchtower
+  #   container_name: ghostwire-watchtower
+  #   restart: unless-stopped
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   command: --interval 86400 ghostwire-backend  # check once a day
+
+
+volumes:
+  ghostwire-data:
+    driver: local
+  ghostwire-dist:
+    driver: local
+  # ghostwire-pgdata:
+  #   driver: local

@@ -1,0 +1,37 @@
+# GhostWire — Backend Dockerfile
+# Multi-arch: works on amd64 and arm64 (Raspberry Pi 4/5)
+
+FROM python:3.12-slim
+
+LABEL org.opencontainers.image.title="GhostWire Backend"
+LABEL org.opencontainers.image.description="Self-hosted IKEv2/IPSec VPN management API"
+LABEL org.opencontainers.image.source="https://github.com/ghostwire-vpn/ghostwire"
+
+# System deps: strongSwan tools for ipsec statusall, curl for health check
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+    strongswan strongswan-pki \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/ghostwire
+
+# Install Python deps first (cached layer)
+COPY backend/requirements.txt ./backend/requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
+
+# Copy application code
+COPY backend/ ./backend/
+
+# Create data directory
+RUN mkdir -p /opt/ghostwire/data /opt/ghostwire/plugins /var/log/ghostwire
+
+ENV PYTHONPATH=/opt/ghostwire/backend
+ENV PYTHONUNBUFFERED=1
+
+EXPOSE 8080
+
+CMD ["python", "-m", "uvicorn", "app.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8080", \
+     "--log-config", "/opt/ghostwire/backend/log_config.json", \
+     "--workers", "1"]

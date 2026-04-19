@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="GhostWire — Self-hosted IKEv2/IPSec VPN for Raspberry Pi and Linux. One-command install, beautiful dashboard, DNS ad blocking, multi-server. Free and open source.">
+<meta property="og:title" content="GhostWire — Self-Hosted VPN">
+<meta property="og:description" content="Privacy-first IKEv2 VPN with a modern dashboard. Runs on a $15 Pi. Install in 3 minutes.">
+<meta name="theme-color" content="#6366f1">
+<title>GhostWire — Self-Hosted IKEv2 VPN</title>
+<style>
+:root {
+  --accent: #6366f1; --accent2: #4f46e5; --success: #34d399;
+  --bg: #070810; --card: #0f1220; --border: #1a2035;
+  --text: #e2e8f0; --text2: #94a3b8; --text3: #475569;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+/* ── Nav ─────────────────────────────────────────────────────────────────── */
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 0 40px; height: 64px; display: flex; align-items: center; justify-content: space-between; background: rgba(7,8,16,.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,.06); }
+.nav-logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; color: var(--text); text-decoration: none; }
+.nav-logo-icon { font-size: 24px; }
+.nav-links { display: flex; align-items: center; gap: 32px; }
+.nav-links a { color: var(--text2); text-decoration: none; font-size: 14px; transition: color .15s; }
+.nav-links a:hover { color: var(--text); }
+.nav-cta { display: flex; align-items: center; gap: 12px; }
+.btn-gh { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); color: var(--text); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all .15s; }
+.btn-gh:hover { background: rgba(255,255,255,.12); }
+.btn-gh svg { width: 15px; height: 15px; fill: currentColor; }
+.btn-install { background: var(--accent); color: #fff; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; transition: opacity .15s; }
+.btn-install:hover { opacity: .88; }
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+.hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 120px 24px 80px; position: relative; overflow: hidden; }
+.hero-glow { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); width: 700px; height: 700px; background: radial-gradient(circle, rgba(99,102,241,.18) 0%, transparent 70%); pointer-events: none; }
+.hero-badge { display: inline-flex; align-items: center; gap: 7px; background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.25); color: #818cf8; border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 600; margin-bottom: 28px; }
+.hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.4)} }
+.hero h1 { font-size: clamp(40px, 7vw, 76px); font-weight: 900; line-height: 1.05; letter-spacing: -.03em; margin-bottom: 24px; }
+.hero h1 span { background: linear-gradient(135deg, #6366f1, #a78bfa, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero-sub { font-size: clamp(16px, 2.5vw, 20px); color: var(--text2); max-width: 560px; line-height: 1.6; margin-bottom: 40px; }
+.hero-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center; margin-bottom: 64px; }
+.hero-btn-primary { display: flex; align-items: center; gap: 9px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; padding: 14px 28px; border-radius: 12px; font-size: 16px; font-weight: 700; text-decoration: none; transition: transform .15s, box-shadow .15s; box-shadow: 0 4px 24px rgba(99,102,241,.35); }
+.hero-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,.45); }
+.hero-btn-secondary { display: flex; align-items: center; gap: 9px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); color: var(--text); padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 600; text-decoration: none; transition: all .15s; }
+.hero-btn-secondary:hover { background: rgba(255,255,255,.09); }
+.hero-btn-secondary svg, .hero-btn-primary svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+.install-snippet { background: rgba(0,0,0,.5); border: 1px solid var(--border); border-radius: 10px; padding: 14px 22px; font-family: monospace; font-size: 14px; color: #a78bfa; display: flex; align-items: center; gap: 14px; }
+.install-prompt { color: var(--success); }
+.copy-btn { background: rgba(255,255,255,.08); border: none; color: var(--text2); padding: 4px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; transition: all .15s; }
+.copy-btn:hover { background: rgba(255,255,255,.14); color: var(--text); }
+
+/* ── Stats bar ────────────────────────────────────────────────────────────── */
+.stats-bar { display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap; padding: 24px 40px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: rgba(255,255,255,.02); }
+.stat-item { text-align: center; }
+.stat-val { font-size: 28px; font-weight: 800; color: var(--text); }
+.stat-label { font-size: 12px; color: var(--text3); margin-top: 3px; }
+
+/* ── Features ─────────────────────────────────────────────────────────────── */
+section { padding: 96px 24px; }
+.section-inner { max-width: 1100px; margin: 0 auto; }
+.section-eyebrow { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 14px; text-align: center; }
+.section-title { font-size: clamp(28px, 4vw, 44px); font-weight: 800; text-align: center; margin-bottom: 14px; letter-spacing: -.02em; }
+.section-sub { font-size: 16px; color: var(--text2); text-align: center; max-width: 540px; margin: 0 auto 56px; line-height: 1.6; }
+
+.features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.feature-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; transition: border-color .2s, transform .2s; }
+.feature-card:hover { border-color: rgba(99,102,241,.4); transform: translateY(-3px); }
+.feature-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; font-size: 22px; }
+.fi-purple  { background: rgba(99,102,241,.15); }
+.fi-green   { background: rgba(52,211,153,.15); }
+.fi-blue    { background: rgba(96,165,250,.15); }
+.fi-amber   { background: rgba(251,191,36,.15); }
+.fi-red     { background: rgba(248,113,113,.15); }
+.fi-teal    { background: rgba(34,211,238,.15); }
+.fi-pink    { background: rgba(251,113,133,.15); }
+.fi-indigo  { background: rgba(129,140,248,.15); }
+.feature-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.feature-desc { font-size: 14px; color: var(--text2); line-height: 1.6; }
+
+/* ── Terminal demo ────────────────────────────────────────────────────────── */
+.demo-section { background: linear-gradient(180deg, transparent, rgba(99,102,241,.05), transparent); }
+.terminal { background: #060810; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; max-width: 680px; margin: 0 auto; box-shadow: 0 20px 80px rgba(0,0,0,.5); }
+.terminal-bar { background: #0d1121; padding: 12px 18px; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid var(--border); }
+.t-dot { width: 12px; height: 12px; border-radius: 50%; }
+.t-dot.red { background: #ff5f57; } .t-dot.yellow { background: #febc2e; } .t-dot.green { background: #28c840; }
+.t-title { flex: 1; text-align: center; font-size: 12px; color: var(--text3); }
+.terminal-body { padding: 22px 24px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; line-height: 2; }
+.t-prompt { color: var(--success); }
+.t-cmd { color: var(--text); }
+.t-out { color: var(--text3); }
+.t-ok { color: var(--success); }
+.t-accent { color: #a78bfa; }
+.t-url { color: #60a5fa; text-decoration: underline; }
+
+/* ── Dashboard screenshot mock ────────────────────────────────────────────── */
+.dashboard-mock { max-width: 960px; margin: 48px auto 0; background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 32px 100px rgba(0,0,0,.6); }
+.mock-bar { background: #0a0c14; padding: 10px 18px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+.mock-dot { width: 10px; height: 10px; border-radius: 50%; }
+.mock-url { flex: 1; background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 5px; padding: 4px 12px; font-size: 11px; color: var(--text3); font-family: monospace; }
+.mock-body { display: flex; height: 320px; }
+.mock-sidebar { width: 180px; background: #0d1121; border-right: 1px solid var(--border); padding: 16px 10px; flex-shrink: 0; }
+.mock-logo { display: flex; align-items: center; gap: 8px; padding: 0 6px 16px; border-bottom: 1px solid var(--border); margin-bottom: 10px; font-size: 13px; font-weight: 700; color: var(--accent); }
+.mock-nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; font-size: 12px; color: var(--text2); margin-bottom: 2px; }
+.mock-nav-item.active { background: rgba(99,102,241,.15); color: var(--accent); }
+.mock-nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.mock-content { flex: 1; padding: 18px; overflow: hidden; background: #080a12; }
+.mock-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+.mock-stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.mock-stat-val { font-size: 22px; font-weight: 800; margin-bottom: 2px; }
+.mock-stat-label { font-size: 10px; color: var(--text3); }
+.mock-table { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.mock-thead { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.mock-thead span { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
+.mock-trow { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding: 8px 12px; border-bottom: 1px solid rgba(26,32,53,.5); font-size: 11px; color: var(--text2); }
+.mock-trow:last-child { border-bottom: none; }
+.badge-on { color: var(--success); font-size: 10px; }
+.badge-off { color: var(--text3); font-size: 10px; }
+
+/* ── Comparison ───────────────────────────────────────────────────────────── */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 800px; margin: 0 auto; }
+.compare-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 28px; }
+.compare-card.highlight { border-color: rgba(99,102,241,.4); background: rgba(99,102,241,.05); }
+.compare-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.compare-price { font-size: 28px; font-weight: 900; margin-bottom: 20px; }
+.compare-price span { font-size: 14px; font-weight: 400; color: var(--text3); }
+.compare-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.compare-row:last-child { border-bottom: none; }
+.chk { color: var(--success); font-weight: 700; }
+.cross { color: var(--text3); }
+
+/* ── Install CTA ──────────────────────────────────────────────────────────── */
+.cta-section { background: linear-gradient(135deg, rgba(99,102,241,.1), rgba(79,70,229,.06)); border-top: 1px solid rgba(99,102,241,.15); border-bottom: 1px solid rgba(99,102,241,.15); }
+.cta-inner { text-align: center; max-width: 600px; margin: 0 auto; }
+.cta-inner h2 { font-size: clamp(28px,4vw,42px); font-weight: 900; margin-bottom: 14px; letter-spacing: -.02em; }
+.cta-inner p { font-size: 16px; color: var(--text2); margin-bottom: 32px; line-height: 1.6; }
+.cta-actions { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+footer { padding: 40px 40px 32px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+.footer-logo { font-size: 15px; font-weight: 800; color: var(--text2); }
+.footer-links { display: flex; gap: 24px; }
+.footer-links a { font-size: 13px; color: var(--text3); text-decoration: none; transition: color .15s; }
+.footer-links a:hover { color: var(--text); }
+.footer-note { font-size: 12px; color: var(--text3); }
+
+@media (max-width: 768px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .stats-bar { gap: 24px; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .mock-sidebar { display: none; }
+  .mock-stats { grid-template-columns: 1fr 1fr; }
+  footer { flex-direction: column; text-align: center; }
+  .footer-links { justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Nav ─────────────────────────────────────────────────────────────────── -->
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-icon">👻</span>
+    GhostWire
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#install">Install</a>
+    <a href="#compare">Compare</a>
+    <a href="https://github.com/ghostwire-vpn/ghostwire/wiki" target="_blank">Docs</a>
+  </div>
+  <div class="nav-cta">
+    <a href="https://github.com/ghostwire-vpn/ghostwire" target="_blank" class="btn-gh">
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+      Star on GitHub
+    </a>
+    <a href="#install" class="btn-install">Install Free →</a>
+  </div>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">
+    <div class="hero-badge-dot"></div>
+    Open Source · Free Forever · No Telemetry
+  </div>
+  <h1>Your VPN.<br><span>Your Server. Your Rules.</span></h1>
+  <p class="hero-sub">
+    GhostWire is a self-hosted IKEv2/IPSec VPN that runs on any Linux box — from a $15 Raspberry Pi to a cloud VM.
+    Beautiful dashboard. DNS ad blocking. Multi-server. Install in under 3 minutes.
+  </p>
+  <div class="hero-actions">
+    <a href="#install" class="hero-btn-primary">
+      <svg viewBox="0 0 24 24"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/></svg>
+      Install in 3 minutes
+    </a>
+    <a href="https://github.com/ghostwire-vpn/ghostwire" target="_blank" class="hero-btn-secondary">
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+      View on GitHub
+    </a>
+  </div>
+  <div class="install-snippet">
+    <span class="install-prompt">$</span>
+    <span class="t-cmd">curl -fsSL https://ghostwire.sh | sudo bash</span>
+    <button class="copy-btn" onclick="copyInstall(this)">Copy</button>
+  </div>
+</div>
+
+<!-- ── Stats ─────────────────────────────────────────────────────────────────── -->
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-val">IKEv2</div><div class="stat-label">Protocol</div></div>
+  <div class="stat-item"><div class="stat-val">&lt; 3 min</div><div class="stat-label">Install time</div></div>
+  <div class="stat-item"><div class="stat-val">SQLite</div><div class="stat-label">Zero-config DB</div></div>
+  <div class="stat-item"><div class="stat-val">Pi ✓</div><div class="stat-label">Raspberry Pi ready</div></div>
+  <div class="stat-item"><div class="stat-val">0 USD</div><div class="stat-label">Forever free</div></div>
+</div>
+
+<!-- ── Dashboard mock ──────────────────────────────────────────────────────── -->
+<section style="padding-top:72px;padding-bottom:0">
+  <div class="section-inner">
+    <div class="section-eyebrow">Dashboard</div>
+    <h2 class="section-title">Everything in one place</h2>
+    <p class="section-sub">A modern, responsive dashboard that runs entirely on your server. No cloud required.</p>
+
+    <div class="dashboard-mock">
+      <div class="mock-bar">
+        <div class="mock-dot" style="background:#ff5f57"></div>
+        <div class="mock-dot" style="background:#febc2e"></div>
+        <div class="mock-dot" style="background:#28c840"></div>
+        <div class="mock-url">http://192.168.1.100:8080</div>
+      </div>
+      <div class="mock-body">
+        <div class="mock-sidebar">
+          <div class="mock-logo">
+            <span>👻</span> GhostWire
+          </div>
+          <div class="mock-nav-item active"><div class="mock-nav-dot"></div>Dashboard</div>
+          <div class="mock-nav-item"><div class="mock-nav-dot"></div>Users</div>
+          <div class="mock-nav-item"><div class="mock-nav-dot"></div>DNS Blocking</div>
+          <div class="mock-nav-item"><div class="mock-nav-dot"></div>Analytics</div>
+          <div class="mock-nav-item"><div class="mock-nav-dot"></div>Nodes</div>
+          <div class="mock-nav-item"><div class="mock-nav-dot"></div>Themes</div>
+        </div>
+        <div class="mock-content">
+          <div class="mock-stats">
+            <div class="mock-stat-card">
+              <div class="mock-stat-val" style="color:#6366f1">12</div>
+              <div class="mock-stat-label">VPN Users</div>
+            </div>
+            <div class="mock-stat-card">
+              <div class="mock-stat-val" style="color:#34d399">5</div>
+              <div class="mock-stat-label">Connected</div>
+            </div>
+            <div class="mock-stat-card">
+              <div class="mock-stat-val" style="color:#fbbf24">14.3k</div>
+              <div class="mock-stat-label">Blocked today</div>
+            </div>
+            <div class="mock-stat-card">
+              <div class="mock-stat-val" style="color:#60a5fa">99.8%</div>
+              <div class="mock-stat-label">Uptime</div>
+            </div>
+          </div>
+          <div class="mock-table">
+            <div class="mock-thead"><span>User</span><span>VPN IP</span><span>Country</span><span>Status</span></div>
+            <div class="mock-trow"><span>alice</span><span>10.10.0.2</span><span>🇩🇪 DE</span><span class="badge-on">● Online</span></div>
+            <div class="mock-trow"><span>bob</span><span>10.10.0.3</span><span>🇺🇸 US</span><span class="badge-on">● Online</span></div>
+            <div class="mock-trow"><span>charlie</span><span>—</span><span>—</span><span class="badge-off">Offline</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ─────────────────────────────────────────────────────────────── -->
+<section id="features">
+  <div class="section-inner">
+    <div class="section-eyebrow">Features</div>
+    <h2 class="section-title">Everything you'd pay $10/mo for</h2>
+    <p class="section-sub">Commercial VPNs charge monthly for what GhostWire gives you permanently on hardware you own.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon fi-purple">🔐</div>
+        <div class="feature-title">IKEv2 / IPSec</div>
+        <div class="feature-desc">Industry-standard strongSwan VPN. Native clients on every platform — iOS, Android, Windows, macOS, Linux. No app needed.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-green">🛡️</div>
+        <div class="feature-title">DNS Ad Blocking</div>
+        <div class="feature-desc">Block ads, trackers, and malware at the DNS level for every connected device. Per-user toggles. Custom whitelist and blocklist.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-blue">📊</div>
+        <div class="feature-title">Analytics + GraphQL</div>
+        <div class="feature-desc">See what's being blocked, when, and by whom. GraphQL endpoint for flexible custom queries. Daily rollup summaries.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-amber">🌍</div>
+        <div class="feature-title">Multi-Server Fleet</div>
+        <div class="feature-desc">Manage multiple VPN nodes from a single dashboard. Health monitoring, CPU/RAM graphs, latency tracking.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-teal">🤖</div>
+        <div class="feature-title">Bot Notifications</div>
+        <div class="feature-desc">Get Telegram, Discord, or Slack alerts for connections, failures, and node events. One toggle — all platforms.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-red">🔑</div>
+        <div class="feature-title">Two-Factor Auth</div>
+        <div class="feature-desc">TOTP authenticator apps and email OTP. Admin force-reset for lost phone recovery. Per-user 2FA status in the admin table.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-pink">🧩</div>
+        <div class="feature-title">Plugin System</div>
+        <div class="feature-desc">Install community plugins via zip upload. Plugins can add API routes, custom dashboard pages, and scheduled tasks.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-indigo">🎨</div>
+        <div class="feature-title">Theming Engine</div>
+        <div class="feature-desc">5 built-in themes — Indigo, Midnight, Forest, Rose, Amber. Build custom themes with a live-preview color editor.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Terminal install demo ───────────────────────────────────────────────── -->
+<section id="install" class="demo-section">
+  <div class="section-inner">
+    <div class="section-eyebrow">Installation</div>
+    <h2 class="section-title">One command. That's it.</h2>
+    <p class="section-sub">The installer handles everything: strongSwan, certificates, the dashboard, and systemd services.</p>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="t-dot red"></div>
+        <div class="t-dot yellow"></div>
+        <div class="t-dot green"></div>
+        <div class="t-title">terminal — ssh pi@192.168.1.100</div>
+      </div>
+      <div class="terminal-body">
+        <div><span class="t-prompt">pi@raspberrypi:~$</span> <span class="t-cmd">curl -fsSL https://ghostwire.sh | sudo bash</span></div>
+        <div class="t-out">&nbsp;</div>
+        <div class="t-accent">  ██████╗ ██╗  ██╗ ██████╗ ███████╗████████╗██╗    ██╗██╗██████╗ ███████╗</div>
+        <div class="t-accent">  ██╔════╝ ██║  ██║██╔═══██╗██╔════╝╚══██╔══╝██║    ██║██║██╔══██╗██╔════╝</div>
+        <div class="t-out">&nbsp;</div>
+        <div><span class="t-ok">[✓]</span> <span class="t-out">Dependencies installed (strongSwan, Python 3.12, Node 20)</span></div>
+        <div><span class="t-ok">[✓]</span> <span class="t-out">TLS certificates generated (CA + server cert)</span></div>
+        <div><span class="t-ok">[✓]</span> <span class="t-out">Database initialised (SQLite at /opt/ghostwire/data/ghostwire.db)</span></div>
+        <div><span class="t-ok">[✓]</span> <span class="t-out">strongSwan configured (IKEv2/EAP-MSCHAPv2)</span></div>
+        <div><span class="t-ok">[✓]</span> <span class="t-out">Firewall rules applied (NAT + forwarding)</span></div>
+        <div><span class="t-ok">[✓]</span> <span class="t-out">Dashboard built and running</span></div>
+        <div class="t-out">&nbsp;</div>
+        <div><span class="t-ok">════ 👻 GhostWire Installation Complete! ════</span></div>
+        <div class="t-out">&nbsp;</div>
+        <div><span class="t-out">  Dashboard: </span><span class="t-url">http://192.168.1.100:8080</span></div>
+        <div><span class="t-out">  VPN Server: </span><span class="t-accent">myvpn.dynu.net</span></div>
+        <div class="t-out">&nbsp;</div>
+        <div><span class="t-prompt">pi@raspberrypi:~$</span> <span class="t-cmd">_</span></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:28px;font-size:14px;color:var(--text3)">
+      Also available: <a href="https://github.com/ghostwire-vpn/ghostwire/wiki/Web-Installer" style="color:var(--accent);text-decoration:none">web installer wizard</a>
+      and <a href="https://github.com/ghostwire-vpn/ghostwire/wiki/Docker" style="color:var(--accent);text-decoration:none">Docker Compose stack</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Compare ───────────────────────────────────────────────────────────────── -->
+<section id="compare">
+  <div class="section-inner">
+    <div class="section-eyebrow">Compare</div>
+    <h2 class="section-title">Why self-host?</h2>
+    <p class="section-sub">You own the server. You own the keys. Your traffic never touches anyone else's infrastructure.</p>
+
+    <div class="compare-grid">
+      <div class="compare-card highlight">
+        <div class="compare-title">👻 GhostWire</div>
+        <div class="compare-price" style="color:var(--success)">Free <span>/ forever</span></div>
+        <div class="compare-row"><span class="chk">✓</span> Full source code ownership</div>
+        <div class="compare-row"><span class="chk">✓</span> Zero logs (your server)</div>
+        <div class="compare-row"><span class="chk">✓</span> Unlimited users</div>
+        <div class="compare-row"><span class="chk">✓</span> DNS ad blocking included</div>
+        <div class="compare-row"><span class="chk">✓</span> Multi-server management</div>
+        <div class="compare-row"><span class="chk">✓</span> Plugin &amp; theme ecosystem</div>
+        <div class="compare-row"><span class="chk">✓</span> Runs on a $15 Raspberry Pi</div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">☁ Commercial VPN</div>
+        <div class="compare-price">$5–15 <span>/ month</span></div>
+        <div class="compare-row"><span class="cross">✗</span> Closed source</div>
+        <div class="compare-row"><span class="cross">✗</span> Trust their "no logs" claim</div>
+        <div class="compare-row"><span class="cross">✗</span> Per-device or seat limits</div>
+        <div class="compare-row"><span class="cross">✗</span> Ad blocking costs extra</div>
+        <div class="compare-row"><span class="cross">✗</span> No custom server regions</div>
+        <div class="compare-row"><span class="cross">✗</span> No customization</div>
+        <div class="compare-row"><span class="cross">✗</span> Ongoing subscription</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ───────────────────────────────────────────────────────────────────── -->
+<section class="cta-section">
+  <div class="section-inner cta-inner">
+    <h2>Ready to own your VPN?</h2>
+    <p>It takes less time than signing up for a commercial service. And it's yours permanently.</p>
+    <div class="cta-actions">
+      <a href="https://github.com/ghostwire-vpn/ghostwire" target="_blank" class="hero-btn-secondary">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+        ⭐ Star on GitHub
+      </a>
+      <a href="https://github.com/ghostwire-vpn/ghostwire/wiki" target="_blank" class="hero-btn-secondary">📖 Read the Docs</a>
+      <a href="#install" class="hero-btn-primary">
+        <svg viewBox="0 0 24 24"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/></svg>
+        Install Free
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ───────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-logo">👻 GhostWire</div>
+  <div class="footer-links">
+    <a href="https://github.com/ghostwire-vpn/ghostwire" target="_blank">GitHub</a>
+    <a href="https://github.com/ghostwire-vpn/ghostwire/wiki" target="_blank">Docs</a>
+    <a href="https://github.com/ghostwire-vpn/ghostwire/issues" target="_blank">Issues</a>
+    <a href="https://github.com/ghostwire-vpn/ghostwire/releases" target="_blank">Releases</a>
+  </div>
+  <div class="footer-note">MIT License · Built with FastAPI + Vue 3 + strongSwan</div>
+</footer>
+
+<script>
+function copyInstall(btn) {
+  navigator.clipboard.writeText('curl -fsSL https://ghostwire.sh | sudo bash').then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+// Smooth nav active state
+const sections = document.querySelectorAll('section[id]');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.querySelectorAll('.nav-links a').forEach(a => {
+        a.style.color = a.getAttribute('href') === '#' + e.target.id
+          ? 'var(--text)' : '';
+      });
+    }
+  });
+}, { threshold: 0.4 });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

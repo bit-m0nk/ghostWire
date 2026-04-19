@@ -1,0 +1,35 @@
+# GhostWire — Python dependencies
+# Phase 1 (core VPN management)
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+sqlalchemy>=2.0.0
+bcrypt>=4.0.0
+python-jose[cryptography]>=3.3.0
+cryptography>=42.0.0
+python-multipart>=0.0.9
+aiofiles>=23.2.0
+httpx>=0.27.0
+aiosmtplib>=3.0.0
+geoip2>=4.8.0
+maxminddb>=2.0.0
+python-dotenv>=1.0.0
+pydantic-settings>=2.2.0
+psutil>=5.9.0
+qrcode[pil]>=7.4.2
+Pillow>=10.0.0
+schedule>=1.2.0
+
+# Phase 2 — 2FA, custom fields, API keys
+pyotp>=2.9.0          # TOTP authenticator app support
+
+# Phase 3 — DNS blocking + GraphQL analytics
+strawberry-graphql[fastapi]>=0.222.0   # GraphQL analytics endpoint
+dnspython>=2.6.0                       # DNS query helpers
+
+# Phase 4 — multi-server nodes + bot integrations
+asyncpg>=0.29.0                        # async Postgres driver (multi-server mode)
+httpx>=0.27.0                          # already present — used for node health checks
+
+# Phase 5 — plugins, theming, encrypted backup
+cryptography>=42.0.0                   # already present — AES-256-GCM backup encryption
+python-multipart>=0.0.9                # already present — needed for UploadFile in backup/plugins

@@ -1,0 +1,19 @@
+[Unit]
+Description=GhostWire IP Monitor & DDNS Updater
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=__INSTALL_DIR__/backend
+ExecStart=__INSTALL_DIR__/venv/bin/python3 -m app.services.ip_monitor
+Restart=always
+RestartSec=30
+StandardOutput=append:/var/log/ghostwire/monitor.log
+StandardError=append:/var/log/ghostwire/monitor.log
+Environment=PYTHONPATH=__INSTALL_DIR__/backend
+EnvironmentFile=__INSTALL_DIR__/.env
+
+[Install]
+WantedBy=multi-user.target
