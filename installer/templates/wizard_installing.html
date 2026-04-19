@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GhostWire — Installing…</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#08090f;color:#e2e8f0;min-height:100vh;padding:32px 20px}
+.wrap{max-width:640px;margin:0 auto}
+.header{text-align:center;margin-bottom:28px}
+.ghost{font-size:36px;display:inline-block;animation:float 2s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+h1{font-size:22px;font-weight:800;margin:10px 0 4px}
+.sub{color:#64748b;font-size:13px}
+.progress-wrap{background:#111827;border:1px solid #1e2a3a;border-radius:14px;padding:20px 24px;margin-bottom:16px}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-bottom:8px}
+.progress-bar{height:6px;background:#1e2a3a;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#6366f1,#34d399);border-radius:3px;transition:width .5s;animation:progress-pulse 2s ease-in-out infinite}
+@keyframes progress-pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.log-box{background:#08090f;border:1px solid #1e2a3a;border-radius:10px;padding:14px 16px;height:340px;overflow-y:auto;font-family:monospace;font-size:12px;line-height:1.7;color:#94a3b8}
+.log-box .ok{color:#34d399}
+.log-box .warn{color:#fbbf24}
+.log-box .err{color:#f87171}
+.log-box .info{color:#818cf8}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid #1e2a3a;border-top-color:#6366f1;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="ghost">👻</div>
+    <h1>Installing GhostWire…</h1>
+    <p class="sub">This usually takes 2–4 minutes. Don't close this window.</p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span><span class="spinner"></span>Running installer</span>
+      <span id="log_count">0 lines</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress_fill" style="width:15%"></div></div>
+  </div>
+
+  <div class="log-box" id="log_box">
+    {% for line in log_lines %}
+    <div class="{{ 'ok' if '[✓]' in line else 'warn' if '[!]' in line else 'err' if '[✗]' in line else 'info' if '[→]' in line else '' }}">{{ line | safe }}</div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+let lastCount = {{ log_lines | length }};
+let progress = 15;
+
+function colorClass(line) {
+  if (line.includes('[✓]')) return 'ok';
+  if (line.includes('[!]')) return 'warn';
+  if (line.includes('[✗]')) return 'err';
+  if (line.includes('[→]')) return 'info';
+  return '';
+}
+
+async function poll() {
+  try {
+    const r = await fetch('/status');
+    const d = await r.json();
+    const box = document.getElementById('log_box');
+    const lines = d.log_lines || [];
+
+    if (lines.length > lastCount) {
+      for (let i = lastCount; i < lines.length; i++) {
+        const div = document.createElement('div');
+        div.className = colorClass(lines[i]);
+        // lines[] are already ANSI-stripped and HTML-escaped server-side
+        div.innerHTML = lines[i];
+        box.appendChild(div);
+      }
+      lastCount = lines.length;
+      box.scrollTop = box.scrollHeight;
+      document.getElementById('log_count').textContent = lastCount + ' lines';
+      progress = Math.min(90, 15 + (lastCount * 1.2));
+      document.getElementById('progress_fill').style.width = progress + '%';
+    }
+
+    if (d.step === 'done' || d.step === 'error') {
+      document.getElementById('progress_fill').style.width = '100%';
+      setTimeout(() => location.reload(), 800);
+      return;
+    }
+  } catch(e) {}
+  setTimeout(poll, 1200);
+}
+
+setTimeout(poll, 1200);
+document.getElementById('log_box').scrollTop = document.getElementById('log_box').scrollHeight;
+</script>
+</body>
+</html>

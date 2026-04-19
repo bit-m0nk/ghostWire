@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GhostWire — Configuration</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#08090f;color:#e2e8f0;min-height:100vh;padding:32px 20px}
+.wrap{max-width:560px;margin:0 auto}
+.header{text-align:center;margin-bottom:32px}
+.ghost{font-size:32px}
+h1{font-size:22px;font-weight:800;color:#fff;margin:8px 0 4px}
+.sub{color:#64748b;font-size:13px}
+.card{background:#111827;border:1px solid #1e2a3a;border-radius:14px;padding:24px;margin-bottom:16px}
+.card-title{font-size:12px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:.08em;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.card-title svg{width:14px;height:14px;fill:currentColor}
+.form-row{margin-bottom:14px}
+label{display:block;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+input,select{width:100%;background:#0a0c14;border:1px solid #1e2a3a;color:#e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none}
+input:focus,select:focus{border-color:#6366f1}
+input[type=password]{font-family:monospace}
+.hint{font-size:11px;color:#475569;margin-top:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+.toggle-label{font-size:13px;color:#94a3b8}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#1e2a3a;border-radius:12px;cursor:pointer;transition:.2s}
+.slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#64748b;border-radius:50%;transition:.2s}
+input:checked+.slider{background:#6366f1}
+input:checked+.slider:before{transform:translateX(20px);background:#fff}
+.ddns-section{display:none;margin-top:16px;padding-top:16px;border-top:1px solid #1e2a3a}
+.ddns-section.visible{display:block}
+.provider-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.provider-card{background:#0a0c14;border:2px solid #1e2a3a;border-radius:8px;padding:12px;cursor:pointer;transition:.15s;text-align:center}
+.provider-card:hover,.provider-card.selected{border-color:#6366f1;background:rgba(99,102,241,.08)}
+.provider-card input{display:none}
+.provider-name{font-size:13px;font-weight:600;color:#e2e8f0}
+.provider-url{font-size:11px;color:#64748b}
+.dynu-fields,.noip-fields{display:none}
+.dynu-fields.show,.noip-fields.show{display:block}
+.submit-area{margin-top:8px}
+.btn{width:100%;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.btn:hover{opacity:.88}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <span class="ghost">👻</span>
+    <h1>Configure GhostWire</h1>
+    <p class="sub">These settings can be changed later from the dashboard.</p>
+  </div>
+
+  <form action="/install" method="post">
+    <input type="hidden" name="local_ip" value="{{ cfg.local_ip }}">
+    <input type="hidden" name="public_ip" value="{{ cfg.public_ip }}">
+
+    <!-- Basic -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        Basic Settings
+      </div>
+      <div class="form-row">
+        <label>VPN Brand Name</label>
+        <input type="text" name="vpn_brand" value="GhostWire" placeholder="GhostWire">
+        <div class="hint">Shown in the dashboard and VPN profiles</div>
+      </div>
+      <div class="row2">
+        <div class="form-row">
+          <label>Panel Port</label>
+          <input type="number" name="panel_port" value="8080" min="1024" max="65535">
+        </div>
+        <div class="form-row">
+          <label>VPN Subnet</label>
+          <input type="text" name="vpn_subnet" value="10.10.0.0/24">
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin account -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        Admin Account
+      </div>
+      <div class="row2">
+        <div class="form-row">
+          <label>Username</label>
+          <input type="text" name="admin_user" value="admin" required>
+        </div>
+        <div class="form-row" style="opacity:0"></div>
+      </div>
+      <div class="row2">
+        <div class="form-row">
+          <label>Password</label>
+          <input type="password" name="admin_pass" minlength="12" required placeholder="min 12 characters">
+        </div>
+        <div class="form-row">
+          <label>Confirm Password</label>
+          <input type="password" id="confirm_pass" minlength="12" required placeholder="repeat password">
+        </div>
+      </div>
+    </div>
+
+    <!-- DDNS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        DDNS (Dynamic DNS)
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Enable DDNS (recommended for dynamic IPs)</span>
+        <label class="toggle">
+          <input type="checkbox" name="use_ddns" id="use_ddns_toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="ddns-section" id="ddns_section">
+        <label style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:10px">Choose Provider</label>
+        <div class="provider-grid">
+          <label class="provider-card selected" id="dynu_card">
+            <input type="radio" name="ddns_provider" value="dynu" checked onchange="switchProvider('dynu')">
+            <div class="provider-name">Dynu</div>
+            <div class="provider-url">dynu.net</div>
+          </label>
+          <label class="provider-card" id="noip_card">
+            <input type="radio" name="ddns_provider" value="noip" onchange="switchProvider('noip')">
+            <div class="provider-name">No-IP</div>
+            <div class="provider-url">noip.com</div>
+          </label>
+        </div>
+
+        <div class="dynu-fields show" id="dynu_fields">
+          <div class="form-row">
+            <label>Dynu Hostname</label>
+            <input type="text" name="dynu_hostname" placeholder="myvpn.dynu.net">
+          </div>
+          <div class="row2">
+            <div class="form-row">
+              <label>Dynu Username</label>
+              <input type="text" name="dynu_username">
+            </div>
+            <div class="form-row">
+              <label>IP Update Password</label>
+              <input type="password" name="dynu_pass">
+              <div class="hint">From dynu.com → API Credentials</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="noip-fields" id="noip_fields">
+          <div class="form-row">
+            <label>No-IP Hostname</label>
+            <input type="text" name="noip_hostname" placeholder="myvpn.ddns.net">
+          </div>
+          <div class="row2">
+            <div class="form-row">
+              <label>No-IP Username</label>
+              <input type="text" name="noip_username">
+            </div>
+            <div class="form-row">
+              <label>No-IP Password</label>
+              <input type="password" name="noip_pass">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-area">
+      <button type="submit" class="btn" id="submit_btn">Install GhostWire →</button>
+    </div>
+    <!-- Hidden field keeps ddns_hostname in sync with whichever provider field is visible -->
+    <input type="hidden" name="ddns_hostname" id="ddns_hostname_hidden">
+  </form>
+</div>
+
+<script>
+document.getElementById('use_ddns_toggle').addEventListener('change', function() {
+  document.getElementById('ddns_section').classList.toggle('visible', this.checked);
+});
+
+function switchProvider(p) {
+  document.getElementById('dynu_card').classList.toggle('selected', p === 'dynu');
+  document.getElementById('noip_card').classList.toggle('selected', p === 'noip');
+  document.getElementById('dynu_fields').classList.toggle('show', p === 'dynu');
+  document.getElementById('noip_fields').classList.toggle('show', p === 'noip');
+  syncDdnsHostname();
+}
+
+function syncDdnsHostname() {
+  const provider = document.querySelector('input[name="ddns_provider"]:checked');
+  const providerVal = provider ? provider.value : 'dynu';
+  const dynu = document.querySelector('input[name="dynu_hostname"]');
+  const noip = document.querySelector('input[name="noip_hostname"]');
+  const hidden = document.getElementById('ddns_hostname_hidden');
+  if (hidden) {
+    hidden.value = (providerVal === 'noip' && noip) ? noip.value : (dynu ? dynu.value : '');
+  }
+}
+
+// Sync on any change to provider-specific hostname fields
+document.querySelectorAll('input[name="dynu_hostname"], input[name="noip_hostname"]')
+  .forEach(el => el.addEventListener('input', syncDdnsHostname));
+document.querySelectorAll('input[name="ddns_provider"]')
+  .forEach(el => el.addEventListener('change', syncDdnsHostname));
+// Sync once on page load
+syncDdnsHostname();
+
+document.querySelector('form').addEventListener('submit', function(e) {
+  syncDdnsHostname();  // ensure hidden field is current before submit
+  const p1 = document.querySelector('[name=admin_pass]').value;
+  const p2 = document.getElementById('confirm_pass').value;
+  if (p1 !== p2) { e.preventDefault(); alert('Passwords do not match.'); return; }
+  document.getElementById('submit_btn').textContent = 'Starting installation…';
+  document.getElementById('submit_btn').disabled = true;
+});
+</script>
+</body>
+</html>

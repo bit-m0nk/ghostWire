@@ -1,0 +1,9 @@
+{
+  "slug": "bandwidth-alert",
+  "name": "Bandwidth Alert",
+  "version": "1.0.0",
+  "author": "GhostWire",
+  "description": "Sends a webhook POST when a user disconnects after exceeding a configurable data cap (MB). Includes a /status API endpoint showing per-user totals. A practical example of event hooks + config + API routes.",
+  "homepage": "",
+  "pip_requirements": []
+}
